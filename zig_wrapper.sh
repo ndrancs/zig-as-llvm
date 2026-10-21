@@ -13,7 +13,18 @@ ar | *-ar)
 	exec ${ZIG_EXE} ar "$@" ;;
 dlltool | *-dlltool) exec ${ZIG_EXE} dlltool "$@" ;;
 lib | *-lib)         exec ${ZIG_EXE} lib "$@" ;;
-ranlib | *-ranlib)   exec ${ZIG_EXE} ranlib "$@" ;;
+ranlib | *-ranlib)
+	# libtool on OpenBSD passes -t to touch the symbol-map timestamp, which
+	# zig's ranlib does not support. Drop it and keep every other argument.
+	n=$#
+	while [ "$n" -gt 0 ]; do
+		arg=$1
+		shift
+		[ "${arg}" = "-t" ] || set -- "$@" "${arg}"
+		n=$((n - 1))
+	done
+	exec ${ZIG_EXE} ranlib "$@"
+	;;
 objcopy | *-objcopy) exec ${ZIG_EXE} objcopy "$@" ;;
 objdump | *-objdump) exec ${ZIG_EXE} objdump "$@" ;;
 rc | windres | *-rc | *-windres) exec ${ZIG_EXE} rc "$@" ;;
